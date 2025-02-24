@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Celebrity Smash or Pass</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="flex flex-col items-center p-4 bg-gray-100 min-h-screen">
+  <div id="gender-select" class="flex gap-4 mb-4">
+    <button onclick="setGender('male')" class="bg-blue-500 text-white px-4 py-2 rounded">Erkak</button>
+    <button onclick="setGender('female')" class="bg-pink-500 text-white px-4 py-2 rounded">Ayol</button>
+  </div>
+
+  <div id="celeb-card" class="w-96 text-center hidden">
+    <div class="bg-white rounded-xl shadow-lg p-4">
+      <img id="celeb-img" src="" alt="Celebrity" class="rounded-xl mb-4">
+      <h2 id="celeb-name" class="text-xl font-bold mb-2"></h2>
+      <div class="flex justify-center gap-4">
+        <button onclick="handleChoice('smash')" class="bg-green-500 text-white px-4 py-2 rounded">Vkusim</button>
+        <button onclick="handleChoice('pass')" class="bg-red-500 text-white px-4 py-2 rounded">Vkusimmas</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const TMDB_API_KEY = '5bc6e20267816ea7f0882d5ae891220d';
+    let gender = '';
+    let results = [];
+
+    function setGender(selectedGender) {
+      gender = selectedGender;
+      document.getElementById('gender-select').classList.add('hidden');
+      fetchCeleb();
+    }
+
+    async function fetchCeleb() {
+      try {
+        const genderCode = gender === 'male' ? 2 : gender === 'female' ? 1 : '';
+        const response = await fetch(`https://api.themoviedb.org/3/person/popular?api_key=${TMDB_API_KEY}&language=en-US&page=1`);
+        const data = await response.json();
+        const filteredCelebs = genderCode ? data.results.filter(person => person.gender === genderCode) : data.results;
+        const randomCeleb = filteredCelebs[Math.floor(Math.random() * filteredCelebs.length)];
+
+        document.getElementById('celeb-img').src = `https://image.tmdb.org/t/p/w500${randomCeleb.profile_path}`;
+        document.getElementById('celeb-img').alt = randomCeleb.name;
+        document.getElementById('celeb-name').innerText = randomCeleb.name;
+        document.getElementById('celeb-card').classList.remove('hidden');
+      } catch (error) {
+        console.error('Error fetching celeb:', error);
+      }
+    }
+
+    function handleChoice(choice) {
+      const celebName = document.getElementById('celeb-name').innerText;
+      results.push({ name: celebName, choice });
+      fetchCeleb();
+    }
+  </script>
+</body>
+</html>
