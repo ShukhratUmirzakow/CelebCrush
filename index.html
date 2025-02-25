@@ -12,10 +12,11 @@
     <button onclick="setGender('female')" class="bg-pink-500 text-white px-4 py-2 rounded">Ayol</button>
   </div>
 
-  <div id="celeb-card" class="w-96 text-center hidden">
+  <div id="celeb-card" class="w-full max-w-md text-center hidden">
     <div class="bg-white rounded-xl shadow-lg p-4">
-      <img id="celeb-img" src="" alt="Celebrity" class="rounded-xl mb-4">
+      <img id="celeb-img" src="" alt="Celebrity" class="rounded-xl mb-4 w-full h-auto">
       <h2 id="celeb-name" class="text-xl font-bold mb-2"></h2>
+      <p id="celeb-country" class="text-gray-600 mb-2"></p>
       <div class="flex justify-center gap-4">
         <button onclick="handleChoice('smash')" class="bg-green-500 text-white px-4 py-2 rounded">Vkusim</button>
         <button onclick="handleChoice('pass')" class="bg-red-500 text-white px-4 py-2 rounded">Vkusimmas</button>
@@ -37,17 +38,28 @@
     async function fetchCeleb() {
       try {
         const genderCode = gender === 'male' ? 2 : gender === 'female' ? 1 : '';
-        const response = await fetch(`https://api.themoviedb.org/3/person/popular?api_key=${TMDB_API_KEY}&language=en-US&page=1`);
+        const randomPage = Math.floor(Math.random() * 500) + 1;
+        const response = await fetch(`https://api.themoviedb.org/3/person/popular?api_key=${TMDB_API_KEY}&language=en-US&page=${randomPage}`);
         const data = await response.json();
-        const filteredCelebs = genderCode ? data.results.filter(person => person.gender === genderCode) : data.results;
+
+        let filteredCelebs = genderCode ? data.results.filter(person => person.gender === genderCode) : data.results;
+
+        if (!filteredCelebs.length) {
+          alert('No matching celebrities found. Please try again!');
+          fetchCeleb();
+          return;
+        }
+
         const randomCeleb = filteredCelebs[Math.floor(Math.random() * filteredCelebs.length)];
 
-        document.getElementById('celeb-img').src = `https://image.tmdb.org/t/p/w500${randomCeleb.profile_path}`;
+        document.getElementById('celeb-img').src = randomCeleb.profile_path ? `https://image.tmdb.org/t/p/w500${randomCeleb.profile_path}` : 'https://via.placeholder.com/500x750?text=No+Image';
         document.getElementById('celeb-img').alt = randomCeleb.name;
         document.getElementById('celeb-name').innerText = randomCeleb.name;
+        document.getElementById('celeb-country').innerText = `${getCountryFlag(randomCeleb.place_of_birth)} ${randomCeleb.place_of_birth || 'Unknown'}`;
         document.getElementById('celeb-card').classList.remove('hidden');
       } catch (error) {
         console.error('Error fetching celeb:', error);
+        alert('An error occurred while fetching the celebrity. Please try again later.');
       }
     }
 
@@ -56,6 +68,26 @@
       results.push({ name: celebName, choice });
       fetchCeleb();
     }
+
+    function getCountryFlag(placeOfBirth) {
+      const countryFlags = {
+        'USA': '🇺🇸', 'Canada': '🇨🇦', 'Mexico': '🇲🇽', 'Brazil': '🇧🇷', 'Argentina': '🇦🇷',
+        'Uzbekistan': '🇺🇿', 'Kazakhstan': '🇰🇿', 'Kyrgyzstan': '🇰🇬', 'Turkmenistan': '🇹🇲', 'Tajikistan': '🇹🇯',
+        'China': '🇨🇳', 'Japan': '🇯🇵', 'South Korea': '🇰🇷', 'India': '🇮🇳', 'Thailand': '🇹🇭',
+        'UK': '🇬🇧', 'Germany': '🇩🇪', 'France': '🇫🇷', 'Italy': '🇮🇹', 'Spain': '🇪🇸', 'Russia': '🇷🇺',
+        'Nigeria': '🇳🇬', 'South Africa': '🇿🇦', 'Egypt': '🇪🇬', 'Morocco': '🇲🇦', 'Kenya': '🇰🇪'
+      };
+      return countryFlags[placeOfBirth] || '🌍';
+    }
+
+    window.addEventListener('resize', () => {
+      const card = document.getElementById('celeb-card');
+      if (window.innerWidth < 400) {
+        card.classList.add('p-2');
+      } else {
+        card.classList.remove('p-2');
+      }
+    });
   </script>
 </body>
 </html>
